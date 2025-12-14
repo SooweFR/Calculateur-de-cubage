@@ -2,211 +2,180 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calculateur de cubage</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .nav-item.active { color: #2563eb; }
+        .nav-item.active svg { stroke-width: 2.5px; }
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+        /* Transitions pour le swipe */
+        .view-section { transition: opacity 0.2s ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- Header -->
-    <header class="bg-white border-b border-slate-200 shrink-0 z-20">
-        <div class="max-w-[1600px] mx-auto px-4 py-3 flex justify-between items-center relative">
-            
-            <!-- Marque -->
-            <div class="flex items-center z-10">
-                <div class="font-black text-2xl text-slate-900 tracking-tighter">H2 LOGISTIQUE</div>
+    <header class="bg-white border-b border-slate-200 shrink-0 z-30 relative shadow-sm">
+        <div class="max-w-[1800px] mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex flex-col">
+                <div class="font-black text-xl lg:text-2xl text-slate-900 tracking-tighter leading-none">H2 LOGISTIQUE</div>
+                <div class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">Calculateur</div>
             </div>
-            
-            <!-- Titre (Desktop) -->
-            <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                <h1 class="text-lg font-bold text-slate-800 uppercase tracking-wider">Calculateur de cubage</h1>
-            </div>
-            
-            <!-- Actions Globales -->
-            <div class="flex items-center gap-2 sm:gap-4 z-10 bg-white pl-2">
-                <div class="text-right hidden sm:block">
-                    <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Volume Total</div>
-                    <div class="text-xl font-bold text-blue-600 font-mono"><span id="headerTotal">0.00</span> m³</div>
-                </div>
-                
-                <button onclick="app.triggerSync()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm" title="Synchroniser avec le cloud">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <div class="flex items-center gap-3">
+                <button onclick="app.triggerSync()" class="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700 transition active:scale-95" title="Synchroniser">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <span class="hidden lg:inline">Synchroniser</span>
                 </button>
             </div>
         </div>
-        
-        <!-- Titre Mobile -->
-        <div class="md:hidden bg-slate-50 border-t border-slate-100 py-1.5 text-center">
-            <h1 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Calculateur de cubage</h1>
-        </div>
     </header>
 
-    <!-- Layout Principal -->
-    <main class="flex-1 flex flex-col md:flex-row max-w-[1600px] mx-auto w-full overflow-hidden">
+    <!-- Main Layout -->
+    <main id="mainContainer" class="flex-1 flex flex-col lg:flex-row max-w-[1800px] mx-auto w-full overflow-hidden relative">
         
-        <!-- PANNEAU GAUCHE : CATALOGUE -->
-        <aside class="w-full md:w-4/12 lg:w-3/12 bg-white border-r border-slate-200 flex flex-col h-full z-10 shadow-lg md:shadow-none">
-            
-            <div class="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
+        <!-- PANNEAU 1 : CATALOGUE (Largeur augmentée à 4/12 soit 33%) -->
+        <aside id="panel-catalog" class="view-section w-full lg:w-4/12 bg-white lg:border-r border-slate-200 flex flex-col h-full z-10 absolute lg:relative">
+            <div class="p-4 bg-white border-b border-slate-100 space-y-3 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] z-20">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Ajouter les objets dans :</label>
-                    <select id="roomSelector" class="w-full bg-white border border-blue-300 text-blue-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-medium shadow-sm"></select>
-                </div>
-
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5 pl-1">Pièce de destination</label>
+                    <div class="relative">
+                        <select id="roomSelector" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-8 font-semibold appearance-none transition cursor-pointer"></select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
                     </div>
-                    <input type="text" id="searchInput" placeholder="Rechercher un meuble..." class="block w-full pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <button id="clearSearchBtn" onclick="app.clearSearch()" class="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Chercher un objet..." class="block w-full pl-11 pr-10 py-3 border border-slate-200 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition placeholder-slate-400">
+                    <button id="clearSearchBtn" onclick="app.clearSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-300 hover:text-slate-600 hidden"><svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>
                 </div>
             </div>
-
-            <div class="bg-slate-50 px-4 py-2 border-b border-slate-200">
+            <div class="px-4 py-2 border-b border-slate-100 bg-slate-50/50">
                 <details id="editDetails" class="group">
-                    <summary class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 hover:text-blue-600 py-1 select-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                        <span id="formTitle">Créer un nouvel objet</span>
+                    <summary class="flex items-center justify-between cursor-pointer py-2 select-none text-slate-600 font-medium text-sm hover:text-blue-600 transition">
+                        <span>Créer / modifier un objet</span>
+                        <svg class="w-5 h-5 transition-transform group-open:rotate-180 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </summary>
-                    <form id="itemForm" class="mt-2 pb-2 space-y-3">
+                    <form id="itemForm" class="mt-3 mb-2 space-y-3 pb-2">
                         <input type="hidden" id="editItemId">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="itemName" placeholder="Nom" required class="w-full text-xs rounded border-slate-300 p-2 focus:ring-1 focus:ring-blue-500 border">
-                            <input type="number" id="itemVolume" placeholder="Vol (m³)" step="0.001" min="0" required class="w-full text-xs rounded border-slate-300 p-2 focus:ring-1 focus:ring-blue-500 border">
+                        <div class="grid grid-cols-5 gap-3">
+                            <input type="text" id="itemName" placeholder="Nom" required class="col-span-3 w-full text-sm rounded-lg border-slate-300 p-2.5 focus:ring-2 focus:ring-blue-500 border outline-none">
+                            <input type="number" id="itemVolume" placeholder="m³" step="0.001" min="0" required class="col-span-2 w-full text-sm rounded-lg border-slate-300 p-2.5 focus:ring-2 focus:ring-blue-500 border outline-none">
                         </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="app.resetForm()" class="text-xs text-slate-500 hover:underline">Annuler</button>
-                            <button type="submit" id="saveItemBtn" class="bg-slate-800 text-white text-xs px-3 py-1.5 rounded hover:bg-black transition">Enregistrer</button>
+                        <div class="flex justify-end gap-3 pt-1">
+                            <button type="button" onclick="app.resetForm()" class="px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-lg">Annuler</button>
+                            <button type="submit" id="saveItemBtn" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-sm">Enregistrer</button>
                         </div>
                     </form>
                 </details>
             </div>
-
-            <div class="flex-1 overflow-y-auto custom-scroll bg-white p-2">
-                <div id="catalogList" class="space-y-1"></div>
+            <div class="flex-1 overflow-y-auto custom-scroll p-2 pb-24 lg:pb-2">
+                <div id="catalogList" class="space-y-1.5"></div>
             </div>
-            
-            <button onclick="app.toggleMobileView()" class="md:hidden w-full bg-blue-600 text-white py-3 font-semibold shadow-lg z-50">
-                Voir l'Inventaire (<span id="mobileTotal">0.00</span> m³)
-            </button>
         </aside>
 
-        <!-- PANNEAU CENTRAL : INVENTAIRE -->
-        <section id="inventoryPanel" class="w-full md:w-5/12 lg:w-6/12 bg-slate-100 flex flex-col h-full transform translate-y-full md:translate-y-0 transition-transform duration-300 fixed md:relative top-0 left-0 z-30 md:z-0">
-            
-            <div class="bg-white border-b border-slate-200 p-4 flex justify-between items-center shadow-sm shrink-0">
-                <h2 class="font-bold text-slate-800 flex items-center gap-2">
-                    <button onclick="app.toggleMobileView()" class="md:hidden mr-2 p-1 hover:bg-slate-100 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    Mon Inventaire
-                </h2>
-                <div class="flex items-center gap-2">
-                    <div id="syncStatus" class="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-50 border border-slate-200 text-[10px] text-slate-400">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>Offline
+        <!-- PANNEAU 2 : INVENTAIRE (Réduit à 5/12 pour équilibrer - 41%) -->
+        <section id="panel-inventory" class="hidden lg:flex view-section w-full lg:w-5/12 bg-slate-50 flex-col h-full absolute lg:relative z-10">
+            <div class="bg-white lg:bg-transparent border-b border-slate-200 p-4 flex flex-col lg:flex-row justify-between items-center shrink-0 gap-3">
+                <div class="flex items-center gap-3 w-full lg:w-auto">
+                    <h2 class="font-bold text-slate-800 text-lg whitespace-nowrap">Mon Inventaire</h2>
+                    <div class="flex items-baseline gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-lg border border-blue-200">
+                        <span class="text-xl font-black font-mono leading-none" id="headerTotal">0.00</span>
+                        <span class="text-xs font-bold">m³</span>
                     </div>
-                    <button onclick="app.copyToClipboard()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded text-xs font-medium transition shadow-sm" title="Copier pour Excel">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                        </svg>
-                        Copier
+                </div>
+                <div class="flex items-center gap-2 w-full lg:w-auto justify-end">
+                    <div id="syncStatus" class="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-full bg-white border border-slate-200 text-[10px] text-slate-400 font-medium"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Off</div>
+                    <button onclick="app.copyToClipboard()" class="p-2 text-slate-600 hover:text-blue-600 hover:bg-white rounded-lg transition bg-white lg:bg-transparent shadow-sm lg:shadow-none border border-slate-100 lg:border-transparent" title="Copier">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                     </button>
-                    <button onclick="app.clearSelection(this)" class="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded border border-transparent hover:border-red-100 transition whitespace-nowrap">
-                        Effacer la sélection
+                    <button onclick="app.clearSelection(this)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition bg-white lg:bg-transparent shadow-sm lg:shadow-none border border-slate-100 lg:border-transparent" title="Vider">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
             </div>
-
-            <div id="inventoryContainer" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6"></div>
-
-            <div class="bg-white border-t border-slate-200 p-4 shrink-0 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] hidden md:block">
-                <div class="flex justify-between items-center">
-                    <div class="text-slate-500 text-sm" id="itemCountFooter">0 objets</div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-sm font-semibold text-slate-600 uppercase">Volume Total</span>
-                        <span class="text-3xl font-bold text-blue-600 tracking-tight" id="footerTotal">0.00</span>
-                        <span class="text-lg text-slate-400 font-medium">m³</span>
-                    </div>
-                </div>
+            <div id="inventoryContainer" class="flex-1 overflow-y-auto custom-scroll p-3 lg:p-4 space-y-4 pb-24 lg:pb-4"></div>
+            <div class="bg-white border-t border-slate-200 p-3 shrink-0 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)] hidden lg:block">
+                <div class="text-center"><span class="text-slate-400 text-xs font-medium" id="itemCountFooter">0 objets</span></div>
             </div>
         </section>
 
-        <!-- PANNEAU DROITE : BLOC-NOTE -->
-        <aside class="hidden md:flex w-full md:w-3/12 lg:w-3/12 bg-white border-l border-slate-200 flex-col h-full z-10">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Bloc-note
-                </h2>
+        <!-- PANNEAU 3 : BLOC-NOTE (Reste à 3/12 - 25%) -->
+        <aside id="panel-notepad" class="hidden lg:flex view-section w-full lg:w-3/12 bg-white lg:border-l border-slate-200 flex-col h-full absolute lg:relative z-10">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
+                <h2 class="font-bold text-slate-800 text-lg">Bloc-note</h2>
                 <div class="flex gap-1">
-                    <button onclick="app.copyNotepad()" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Copier le texte">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                        </svg>
-                    </button>
-                    <button onclick="app.clearNotepad(this)" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition" title="Réinitialiser le texte">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                    <button onclick="app.copyNotepad()" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg></button>
+                    <button onclick="app.clearNotepad(this)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button>
                 </div>
             </div>
-            <div class="flex-1 p-0">
-                <textarea id="notepadArea" class="w-full h-full p-4 resize-none focus:outline-none text-sm text-slate-700 leading-relaxed bg-yellow-50/20" placeholder="Écrivez vos notes ici..."></textarea>
+            <div class="flex-1 p-0 pb-20 lg:pb-0 relative">
+                <textarea id="notepadArea" class="w-full h-full p-5 resize-none focus:outline-none text-base text-slate-600 leading-relaxed bg-yellow-50/30" placeholder="Notes..."></textarea>
             </div>
         </aside>
 
     </main>
 
+    <!-- MOBILE NAV -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 safe-pb shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="app.switchTab('catalog')" class="nav-item active flex-1 flex flex-col items-center justify-center h-full text-slate-400 transition hover:bg-slate-50" data-tab="catalog">
+                <svg class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                <span class="text-[10px] font-bold">Catalogue</span>
+            </button>
+            <button onclick="app.switchTab('inventory')" class="nav-item flex-1 flex flex-col items-center justify-center h-full text-slate-400 transition hover:bg-slate-50 relative" data-tab="inventory">
+                <div class="relative">
+                    <svg class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                    <span id="mobileBadge" class="hidden absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-white">0</span>
+                </div>
+                <span class="text-[10px] font-bold">Inventaire</span>
+            </button>
+            <button onclick="app.switchTab('notepad')" class="nav-item flex-1 flex flex-col items-center justify-center h-full text-slate-400 transition hover:bg-slate-50" data-tab="notepad">
+                <svg class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                <span class="text-[10px] font-bold">Notes</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- AUTH MODAL -->
-    <div id="authModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-            <h3 class="text-lg font-bold text-slate-800 mb-2">Accès restreint</h3>
-            <p class="text-sm text-slate-500 mb-4">Veuillez entrer le code d'accès pour valider cette action.</p>
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs transform transition-all scale-100">
+            <div class="text-center mb-5">
+                <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Accès restreint</h3>
+            </div>
             <form onsubmit="event.preventDefault(); app.confirmAuth();">
-                <input type="password" id="authInput" placeholder="Code d'accès" class="w-full border border-slate-300 rounded-lg p-2.5 mb-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="app.closeAuth()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">Valider</button>
+                <input type="password" id="authInput" placeholder="Code..." class="w-full bg-slate-50 border border-slate-200 text-center text-lg tracking-widest rounded-xl p-3 mb-5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-bold text-slate-800">
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="app.closeAuth()" class="px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Annuler</button>
+                    <button type="submit" class="px-4 py-3 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg">Valider</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm opacity-0 transition-opacity duration-300 pointer-events-none z-50">Action effectuée</div>
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-900/90 text-white px-5 py-3 rounded-full shadow-xl text-sm font-medium opacity-0 transition-all duration-300 pointer-events-none z-50 backdrop-blur-sm whitespace-nowrap translate-y-2">Action effectuée</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuration et Données
+        // Configuration
         const ROOMS = ["Général", "Salon", "Cuisine", "Chambre", "Chambre 2", "Chambre 3", "Buanderie & Entrée", "Salle de bain", "Jardin", "Cave & Garage"];
         const DEFAULT_CATALOG = [
             { name: "Armoire (1 porte)", volume: 1 }, { name: "Armoire (2 portes coulissante)", volume: 2 }, { name: "Armoire (2 portes)", volume: 2 },
@@ -246,7 +215,7 @@
             { name: "Valise", volume: 0.3 }, { name: "Vase", volume: 0.15 }, { name: "Vase (grand)", volume: 0.3 }, { name: "Vélo", volume: 0.3 }, { name: "Vélo elliptique", volume: 0.5 },
             { name: "Ventilateur", volume: 0.2 }
         ];
-
+        
         const DEFAULT_NOTE_CONTENT = `Adresse de chargement : \n\nLogement :\nÉtage :\nEscalier : \nAscenseur :\nPortage : \nAutre :\n\n——\nAdresse de déchargement : \n \nLogement :\nÉtage :\nEscalier :\nAscenseur :\nPortage :\nAutre :\n\n——\n\nDate du déménagement : \n\n——\n\nInventaire : \n`;
 
         function debounce(func, wait) {
@@ -258,15 +227,12 @@
         }
 
         const app = {
-            catalog: [],
-            inventory: {},
-            notepadContent: '',
-            activeRoom: ROOMS[0],
-            searchTerm: '',
-            db: null,
-            appId: null,
-            isOnline: false,
-            pendingAction: null,
+            catalog: [], inventory: {}, notepadContent: '', activeRoom: ROOMS[0], searchTerm: '',
+            db: null, appId: null, isOnline: false, pendingAction: null,
+            activeTab: 'catalog',
+            
+            // Swipe vars
+            touchStartX: 0, touchEndX: 0,
 
             init() {
                 this.initFirebase();
@@ -277,6 +243,7 @@
                 this.renderCatalog();
                 this.renderInventory();
                 this.notepadArea.value = this.notepadContent;
+                this.updateMobileView();
             },
 
             async initFirebase() {
@@ -286,18 +253,13 @@
                     const auth = getAuth(firebaseApp);
                     this.db = getFirestore(firebaseApp);
                     this.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-                    
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
                     else await signInAnonymously(auth);
-                    
                     this.isOnline = true;
                     this.setupRealtimeListener();
-                } catch (e) {
-                    console.error("Firebase init failed", e);
-                    this.updateSyncStatus(false);
-                }
+                } catch (e) { console.error("Firebase init failed", e); this.updateSyncStatus(false); }
             },
-
+            
             setupRealtimeListener() {
                 const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'inventory_data', 'app_state');
                 onSnapshot(docRef, (docSnap) => {
@@ -307,23 +269,67 @@
                         if (data) {
                             this.catalog = data.catalog || this.catalog;
                             this.inventory = data.inventory || {};
-                            if (data.notepadContent) {
-                                this.notepadContent = data.notepadContent;
-                                if (this.notepadArea) this.notepadArea.value = this.notepadContent;
-                            }
-                            this.saveData(true);
-                            this.sortCatalog();
-                            this.renderCatalog();
-                            this.renderInventory();
+                            if (data.notepadContent) { this.notepadContent = data.notepadContent; if (this.notepadArea) this.notepadArea.value = this.notepadContent; }
+                            this.saveData(true); this.sortCatalog(); this.renderCatalog(); this.renderInventory();
                         }
                     }
                 }, () => this.updateSyncStatus(false));
+            },
+            
+            triggerSync() { this.requestAuth(() => this.syncToCloud()); },
+            
+            async syncToCloud() {
+                if (!this.isOnline || !this.db) return this.showToast("Erreur: Hors ligne");
+                try {
+                    const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'inventory_data', 'app_state');
+                    await setDoc(docRef, { catalog: this.catalog, inventory: this.inventory, notepadContent: this.notepadContent, lastUpdated: new Date().toISOString() });
+                    this.showToast("Synchronisé !");
+                } catch (e) { console.error(e); this.showToast("Erreur synchro"); }
+            },
+            
+            updateSyncStatus(online) {
+                const el = document.getElementById('syncStatus');
+                if (el) el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500' : 'bg-slate-300'}"></span> ${online ? 'Online' : 'Offline'}`;
             },
 
             loadLocalData() {
                 this.catalog = JSON.parse(localStorage.getItem('calc_catalog')) || DEFAULT_CATALOG.map((item, idx) => ({ id: 'std_' + idx, ...item }));
                 this.inventory = JSON.parse(localStorage.getItem('calc_inventory')) || {};
                 this.notepadContent = localStorage.getItem('calc_notepad') || DEFAULT_NOTE_CONTENT;
+            },
+            saveData(skip = false) {
+                if (!skip) {
+                    localStorage.setItem('calc_catalog', JSON.stringify(this.catalog));
+                    localStorage.setItem('calc_inventory', JSON.stringify(this.inventory));
+                }
+            },
+            
+            switchTab(tab) {
+                this.activeTab = tab;
+                this.updateMobileView();
+            },
+            
+            updateMobileView() {
+                const isLg = window.innerWidth >= 1024;
+                const pCatalog = document.getElementById('panel-catalog');
+                const pInventory = document.getElementById('panel-inventory');
+                const pNotepad = document.getElementById('panel-notepad');
+                
+                document.querySelectorAll('.nav-item').forEach(el => {
+                    if(el.dataset.tab === this.activeTab) el.classList.add('active', 'text-blue-600');
+                    else el.classList.remove('active', 'text-blue-600');
+                });
+
+                if (isLg) {
+                    pCatalog.classList.remove('hidden'); pCatalog.classList.add('flex');
+                    pInventory.classList.remove('hidden'); pInventory.classList.add('flex');
+                    pNotepad.classList.remove('hidden'); pNotepad.classList.add('flex');
+                } else {
+                    pCatalog.classList.add('hidden'); pInventory.classList.add('hidden'); pNotepad.classList.add('hidden');
+                    if(this.activeTab === 'catalog') pCatalog.classList.remove('hidden');
+                    if(this.activeTab === 'inventory') pInventory.classList.remove('hidden');
+                    if(this.activeTab === 'notepad') pNotepad.classList.remove('hidden');
+                }
             },
 
             cacheDOM() {
@@ -332,13 +338,15 @@
                 this.roomSelector = document.getElementById('roomSelector');
                 this.catalogContainer = document.getElementById('catalogList');
                 this.inventoryContainer = document.getElementById('inventoryContainer');
-                this.totalDisplays = [document.getElementById('headerTotal'), document.getElementById('footerTotal')];
+                this.totalDisplays = [document.getElementById('headerTotal')];
                 this.itemForm = document.getElementById('itemForm');
-                this.formTitle = document.getElementById('formTitle');
                 this.detailsEl = document.getElementById('editDetails');
                 this.notepadArea = document.getElementById('notepadArea');
                 this.authModal = document.getElementById('authModal');
                 this.authInput = document.getElementById('authInput');
+                this.mobileBadge = document.getElementById('mobileBadge');
+                this.formTitle = document.getElementById('formTitle');
+                this.mainContainer = document.getElementById('mainContainer');
             },
 
             bindEvents() {
@@ -349,28 +357,44 @@
                     this.renderCatalog();
                 });
                 this.itemForm.addEventListener('submit', (e) => { e.preventDefault(); this.saveItemDefinition(); });
-                
-                // Debounce notepad save
                 this.notepadArea.addEventListener('input', debounce((e) => {
                     this.notepadContent = e.target.value;
                     localStorage.setItem('calc_notepad', this.notepadContent);
                 }, 500));
+                
+                window.addEventListener('resize', debounce(() => this.updateMobileView(), 200));
+                
+                // Swipe Listeners
+                this.mainContainer.addEventListener('touchstart', (e) => { this.touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+                this.mainContainer.addEventListener('touchend', (e) => {
+                    this.touchEndX = e.changedTouches[0].screenX;
+                    this.handleSwipe();
+                }, {passive: true});
+            },
+            
+            handleSwipe() {
+                if (window.innerWidth >= 1024) return; // Desktop ignore
+                const diff = this.touchStartX - this.touchEndX;
+                if (Math.abs(diff) < 50) return; // Seuil
+                
+                if (diff > 0) { // Swipe Left -> Next
+                    if (this.activeTab === 'catalog') this.switchTab('inventory');
+                    else if (this.activeTab === 'inventory') this.switchTab('notepad');
+                } else { // Swipe Right -> Prev
+                    if (this.activeTab === 'notepad') this.switchTab('inventory');
+                    else if (this.activeTab === 'inventory') this.switchTab('catalog');
+                }
             },
 
             populateRooms() {
                 this.roomSelector.innerHTML = ROOMS.map(r => `<option value="${r}">${r}</option>`).join('');
                 this.roomSelector.value = this.activeRoom;
             },
-
             sortCatalog() { this.catalog.sort((a, b) => a.name.localeCompare(b.name)); },
+            fmt(n) { return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
 
             // Auth
-            requestAuth(cb) {
-                this.pendingAction = cb;
-                this.authModal.classList.remove('hidden');
-                this.authInput.value = '';
-                this.authInput.focus();
-            },
+            requestAuth(cb) { this.pendingAction = cb; this.authModal.classList.remove('hidden'); this.authInput.value = ''; this.authInput.focus(); },
             confirmAuth() {
                 if (this.authInput.value === "Helmi2025") {
                     this.authModal.classList.add('hidden');
@@ -384,48 +408,65 @@
             },
             closeAuth() { this.authModal.classList.add('hidden'); this.pendingAction = null; },
 
-            // Actions
+            // CRUD
             saveItemDefinition() {
                 const id = document.getElementById('editItemId').value;
                 const name = document.getElementById('itemName').value.trim();
                 const volume = parseFloat(document.getElementById('itemVolume').value);
                 if (!name || isNaN(volume)) return;
-
                 this.requestAuth(() => {
                     if (id) {
                         const idx = this.catalog.findIndex(i => i.id === id);
                         if (idx !== -1) { this.catalog[idx].name = name; this.catalog[idx].volume = volume; }
-                    } else {
-                        this.catalog.push({ id: 'cust_' + Date.now(), name, volume });
-                    }
-                    this.sortCatalog();
-                    this.saveData();
-                    this.resetForm();
-                    this.renderCatalog();
-                    this.renderInventory();
-                    this.showToast(id ? 'Objet modifié' : 'Objet créé');
+                    } else { this.catalog.push({ id: 'cust_' + Date.now(), name, volume }); }
+                    this.sortCatalog(); this.saveData(); this.resetForm(); this.renderCatalog(); this.renderInventory();
+                    this.showToast(id ? 'Modifié' : 'Créé');
                 });
             },
-
             deleteDefinition(id) {
                 this.requestAuth(() => {
-                    if (confirm("Supprimer définitivement ?")) {
+                    if (confirm("Supprimer ?")) {
                         this.catalog = this.catalog.filter(i => i.id !== id);
                         ROOMS.forEach(r => { if (this.inventory[r]) delete this.inventory[r][id]; if(this.inventory[r] && Object.keys(this.inventory[r]).length===0) delete this.inventory[r]; });
-                        this.saveData();
-                        this.renderCatalog();
-                        this.renderInventory();
+                        this.saveData(); this.renderCatalog(); this.renderInventory();
                     }
                 });
             },
+            editDefinition(id) {
+                const item = this.catalog.find(i => i.id === id);
+                if (!item) return;
+                document.getElementById('editItemId').value = item.id;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemVolume').value = item.volume;
+                this.formTitle.textContent = "Modifier : " + item.name;
+                this.detailsEl.open = true;
+                document.getElementById('itemForm').scrollIntoView({ behavior: 'smooth' });
+            },
+            resetForm() {
+                document.getElementById('editItemId').value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemVolume').value = '';
+                this.formTitle.textContent = "Créer / modifier un objet";
+                this.detailsEl.open = false;
+            },
+            clearSearch() { this.searchTerm = ''; this.searchInput.value = ''; this.clearSearchBtn.classList.add('hidden'); this.renderCatalog(); },
 
             addItemToRoom(id) {
                 if (!this.inventory[this.activeRoom]) this.inventory[this.activeRoom] = {};
                 this.inventory[this.activeRoom][id] = (this.inventory[this.activeRoom][id] || 0) + 1;
-                this.saveData();
-                this.renderInventory();
+                this.saveData(); this.renderInventory();
+                
+                const btn = document.querySelector(`button[data-add="${id}"]`);
+                if(btn) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-transparent');
+                    btn.classList.remove('bg-white', 'text-blue-600', 'border-blue-100');
+                    setTimeout(() => {
+                        btn.classList.remove('bg-blue-600', 'text-white', 'border-transparent');
+                        btn.classList.add('bg-white', 'text-blue-600', 'border-blue-100');
+                    }, 200);
+                }
             },
-
+            
             modifyQuantity(r, id, d) {
                 if (!this.inventory[r] || !this.inventory[r][id]) return;
                 this.inventory[r][id] += d;
@@ -433,19 +474,17 @@
                     delete this.inventory[r][id];
                     if (Object.keys(this.inventory[r]).length === 0) delete this.inventory[r];
                 }
-                this.saveData();
-                this.renderInventory();
+                this.saveData(); this.renderInventory();
             },
 
-            triggerSync() { this.requestAuth(() => this.syncToCloud()); },
-
-            async syncToCloud() {
-                if (!this.isOnline || !this.db) return this.showToast("Erreur: Hors ligne");
-                try {
-                    const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'inventory_data', 'app_state');
-                    await setDoc(docRef, { catalog: this.catalog, inventory: this.inventory, notepadContent: this.notepadContent, lastUpdated: new Date().toISOString() });
-                    this.showToast("Synchronisé !");
-                } catch (e) { console.error(e); this.showToast("Erreur synchro"); }
+            clearSelection(btn) {
+                if (btn.dataset.confirm === "true") {
+                    this.inventory = {}; this.saveData(); this.renderInventory(); this.showToast('Vidé !');
+                    btn.dataset.confirm = "false"; btn.classList.remove("bg-red-500", "text-white");
+                } else {
+                    btn.dataset.confirm = "true"; btn.classList.add("bg-red-500", "text-white");
+                    setTimeout(() => { if (btn.dataset.confirm === "true") { btn.dataset.confirm = "false"; btn.classList.remove("bg-red-500", "text-white"); } }, 2000);
+                }
             },
 
             copyToClipboard() {
@@ -461,96 +500,49 @@
                     }
                 });
                 const ta = document.createElement("textarea");
-                ta.value = text;
-                ta.style.position = "fixed"; ta.style.left = "-9999px";
-                document.body.appendChild(ta);
-                ta.focus(); ta.select();
-                try { document.execCommand('copy'); this.showToast('Copié (Format Excel) !'); } catch (e) { this.showToast('Erreur copie'); }
+                ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                try { document.execCommand('copy'); this.showToast('Copié !'); } catch (e) { this.showToast('Erreur'); }
                 document.body.removeChild(ta);
-            },
-
-            // UI Helpers
-            editDefinition(id) {
-                const item = this.catalog.find(i => i.id === id);
-                if (!item) return;
-                document.getElementById('editItemId').value = item.id;
-                document.getElementById('itemName').value = item.name;
-                document.getElementById('itemVolume').value = item.volume;
-                this.formTitle.textContent = "Modifier : " + item.name;
-                this.detailsEl.open = true;
-                this.itemForm.scrollIntoView({ behavior: 'smooth' });
-            },
-            resetForm() {
-                document.getElementById('editItemId').value = '';
-                document.getElementById('itemName').value = '';
-                document.getElementById('itemVolume').value = '';
-                this.formTitle.textContent = "Créer un nouvel objet";
-                this.detailsEl.open = false;
-            },
-            clearSearch() { this.searchTerm = ''; this.searchInput.value = ''; this.clearSearchBtn.classList.add('hidden'); this.renderCatalog(); },
-            
-            clearSelection(btn) {
-                if (btn.dataset.confirm === "true") {
-                    this.inventory = {}; this.saveData(); this.renderInventory(); this.showToast('Inventaire effacé');
-                    btn.textContent = "Effacer la sélection"; btn.dataset.confirm = "false";
-                    btn.className = "text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded border border-transparent hover:border-red-100 transition whitespace-nowrap text-xs";
-                } else {
-                    btn.dataset.confirm = "true"; btn.textContent = "Confirmer ?";
-                    btn.className = "bg-red-600 text-white px-3 py-1.5 rounded border border-transparent transition whitespace-nowrap text-xs";
-                    setTimeout(() => { if (btn.dataset.confirm === "true") { btn.dataset.confirm = "false"; btn.textContent = "Effacer la sélection"; btn.className = "text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded border border-transparent hover:border-red-100 transition whitespace-nowrap text-xs"; } }, 3000);
-                }
             },
             
             copyNotepad() {
-                const ta = document.createElement("textarea");
-                ta.value = this.notepadArea.value;
-                ta.style.position = "fixed"; ta.style.left = "-9999px";
-                document.body.appendChild(ta); ta.select();
-                try { document.execCommand('copy'); this.showToast('Notes copiées !'); } catch (e) { this.showToast('Erreur copie'); }
-                document.body.removeChild(ta);
+                const ta = document.createElement("textarea"); ta.value = this.notepadArea.value; ta.style.position = "fixed"; ta.style.left = "-9999px";
+                document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); this.showToast('Notes copiées'); } catch (e) {} document.body.removeChild(ta);
             },
             
             clearNotepad(btn) {
                 if (btn.dataset.confirm === "true") {
                     this.notepadContent = DEFAULT_NOTE_CONTENT; this.notepadArea.value = DEFAULT_NOTE_CONTENT;
-                    localStorage.setItem('calc_notepad', DEFAULT_NOTE_CONTENT); this.showToast('Notes réinitialisées');
-                    btn.className = "p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition"; btn.dataset.confirm = "false";
+                    localStorage.setItem('calc_notepad', DEFAULT_NOTE_CONTENT); this.showToast('Réinitialisé');
+                    btn.classList.remove("bg-red-500", "text-white"); btn.dataset.confirm = "false";
                 } else {
-                    btn.dataset.confirm = "true"; btn.className = "p-1.5 text-red-600 bg-red-100 rounded transition";
-                    setTimeout(() => { if (btn.dataset.confirm === "true") { btn.dataset.confirm = "false"; btn.className = "p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition"; } }, 3000);
+                    btn.dataset.confirm = "true"; btn.classList.add("bg-red-500", "text-white");
+                    setTimeout(() => { if (btn.dataset.confirm === "true") { btn.dataset.confirm = "false"; btn.classList.remove("bg-red-500", "text-white"); } }, 2000);
                 }
             },
 
-            updateSyncStatus(online) {
-                const el = document.getElementById('syncStatus');
-                if (el) el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500' : 'bg-slate-300'}"></span> ${online ? 'Online' : 'Offline'}`;
-            },
-
-            saveData(skip = false) {
-                if (!skip) {
-                    localStorage.setItem('calc_catalog', JSON.stringify(this.catalog));
-                    localStorage.setItem('calc_inventory', JSON.stringify(this.inventory));
-                }
-            },
-
-            fmt(n) { return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
-            
             renderCatalog() {
                 const container = this.catalogContainer;
                 const filtered = this.catalog.filter(i => i.name.toLowerCase().includes(this.searchTerm));
-                if (filtered.length === 0) return container.innerHTML = `<div class="text-center text-slate-400 text-xs py-4">Aucun résultat</div>`;
+                
+                if (filtered.length === 0) return container.innerHTML = `<div class="text-center text-slate-400 text-sm py-10">Aucun résultat</div>`;
                 
                 container.innerHTML = filtered.map(item => `
-                    <div class="flex items-center justify-between p-2 bg-white border border-slate-100 rounded hover:border-blue-200 group transition-colors">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="font-medium text-sm text-slate-700 truncate" title="${item.name}">${item.name}</div>
-                            <div class="text-xs text-slate-400 font-mono">${item.volume} m³</div>
+                    <div class="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-300 transition-colors">
+                        <div class="flex-1 min-w-0 pr-3 cursor-pointer" onclick="app.addItemToRoom('${item.id}')">
+                            <div class="font-bold text-slate-800 text-sm md:text-base truncate leading-tight">${item.name}</div>
+                            <div class="text-xs text-slate-400 font-mono mt-0.5">${item.volume} m³</div>
                         </div>
-                        <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <button onclick="app.editDefinition('${item.id}')" class="p-1 text-slate-300 hover:text-blue-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                            <button onclick="app.deleteDefinition('${item.id}')" class="p-1 text-slate-300 hover:text-red-500 mr-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="app.editDefinition('${item.id}')" class="p-2 text-slate-300 hover:text-blue-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                <button onclick="app.deleteDefinition('${item.id}')" class="p-2 text-slate-300 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </div>
+                            <button onclick="app.addItemToRoom('${item.id}')" data-add="${item.id}" class="w-11 h-11 flex items-center justify-center bg-white text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white border border-blue-100 shadow-sm transition active:scale-95 touch-manipulation">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
+                            </button>
                         </div>
-                        <button onclick="app.addItemToRoom('${item.id}')" class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition border border-blue-100 shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></button>
                     </div>
                 `).join('');
             },
@@ -570,32 +562,36 @@
                         const vol = item.volume * qty;
                         roomTotal += vol; totalItems += qty;
                         itemsHtml += `
-                            <div class="flex items-center justify-between p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
-                                <div class="flex-1"><div class="text-sm font-medium text-slate-800">${item.name}</div><div class="text-xs text-slate-400">${item.volume} m³ x ${qty} = <span class="font-semibold text-slate-600">${this.fmt(vol)}</span></div></div>
-                                <div class="flex items-center bg-white border border-slate-200 rounded-lg h-8">
-                                    <button onclick="app.modifyQuantity('${r}', '${id}', -1)" class="w-8 h-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-l-lg transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg></button>
-                                    <div class="w-8 text-center text-sm font-bold text-slate-700 select-none">${qty}</div>
-                                    <button onclick="app.modifyQuantity('${r}', '${id}', 1)" class="w-8 h-full flex items-center justify-center text-slate-500 hover:text-blue-500 hover:bg-blue-50 rounded-r-lg transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></button>
+                            <div class="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-xl shadow-sm mb-2">
+                                <div class="flex-1 pr-2">
+                                    <div class="text-sm md:text-base font-bold text-slate-800 leading-tight">${item.name}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5 font-medium">${item.volume} m³ x ${qty} = <span class="text-blue-600">${this.fmt(vol)}</span></div>
+                                </div>
+                                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-10 shadow-inner">
+                                    <button onclick="app.modifyQuantity('${r}', '${id}', -1)" class="w-10 h-full flex items-center justify-center text-slate-500 hover:text-red-500 active:bg-slate-200 rounded-l-xl transition touch-manipulation"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4" /></svg></button>
+                                    <div class="w-8 text-center text-sm font-bold text-slate-800 select-none">${qty}</div>
+                                    <button onclick="app.modifyQuantity('${r}', '${id}', 1)" class="w-10 h-full flex items-center justify-center text-slate-500 hover:text-blue-500 active:bg-slate-200 rounded-r-xl transition touch-manipulation"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg></button>
                                 </div>
                             </div>`;
                     });
-                    
-                    html += `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"><div class="bg-slate-50 px-4 py-2 border-b border-slate-200 flex justify-between items-center"><h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">${r}</h3><span class="bg-blue-100 text-blue-700 text-xs font-mono font-bold px-2 py-0.5 rounded">${this.fmt(roomTotal)} m³</span></div><div>${itemsHtml}</div></div>`;
+                    html += `<div class="mb-6 last:mb-0"><div class="flex items-center justify-between px-1 mb-2"><h3 class="font-extrabold text-slate-700 text-sm uppercase tracking-wider">${r}</h3><span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md font-mono">${this.fmt(roomTotal)} m³</span></div>${itemsHtml}</div>`;
                     grandTotal += roomTotal;
                 });
 
-                container.innerHTML = hasItems ? html : `<div class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60"><svg class="h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><p class="text-sm">Sélectionnez une pièce et ajoutez des objets</p></div>`;
+                container.innerHTML = hasItems ? html : `<div class="flex flex-col items-center justify-center h-64 text-slate-400"><svg class="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg><p class="text-sm font-medium">L'inventaire est vide</p></div>`;
                 
                 const fTotal = this.fmt(grandTotal);
                 this.totalDisplays.forEach(el => el.textContent = fTotal);
-                document.getElementById('itemCountFooter').textContent = `${totalItems} objet(s)`;
-                document.getElementById('mobileTotal').textContent = fTotal;
+                if(this.mobileBadge) {
+                    this.mobileBadge.textContent = totalItems;
+                    this.mobileBadge.classList.toggle('hidden', totalItems === 0);
+                }
             },
 
             showToast(msg) {
                 const t = document.getElementById('toast');
-                t.textContent = msg; t.classList.remove('opacity-0');
-                setTimeout(() => t.classList.add('opacity-0'), 2000);
+                t.textContent = msg; t.classList.remove('opacity-0', 'translate-y-2');
+                setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 2000);
             }
         };
 
